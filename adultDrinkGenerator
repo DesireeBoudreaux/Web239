@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="author" content="Desiree Boudreaux">
+    <title>Adult Drink Generator</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f8f4fa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 40px;
+        }
+
+        #drinkBox {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.2);
+            max-width: 400px;
+            text-align: center;
+            border: 4px solid #7a3b76;
+        }
+
+        button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: #7a3b76;
+            color: white;
+            border: 2px solid #000000;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #9b4d96;
+        }
+
+        img {
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        select {
+            margin-top: 20px;
+            padding: 8px;
+            border-radius: 5px;
+            border: 2px solid #7a3b76;
+            background: white;
+        }
+    </style>
+</head>
+
+<body>
+
+    <h1>Adult Drink Generator</h1>
+
+    <div id="drinkBox">Select an ingredient then click the button to load a random adult drink recipe!</div>
+
+    <!-- Ingredient dropdown -->
+    <label for="ingredientSelect"><strong>Please select an ingredient:</strong></label>
+    <select id="ingredientSelect">
+        <option value="Vodka">Vodka</option>
+        <option value="Gin">Gin</option>
+        <option value="Rum">Rum</option>
+        <option value="Tequila">Tequila</option>
+        <option value="Whiskey">Whiskey</option>
+        <option value="Bourbon">Bourbon</option>
+        <option value="Brandy">Brandy</option>
+        <option value="Coffee">Coffee</option>
+        <option value="Tea">Tea</option>
+        <option value="Milk">Milk</option>
+        <option value="Cream">Cream</option>
+        <option value="Orange Juice">Orange Juice</option>
+        <option value="Lemon Juice">Lemon Juice</option>
+        <option value="Lime Juice">Lime Juice</option>
+        <option value="Triple Sec">Triple Sec</option>
+        <option value="Kahlua">Kahlua</option>
+        <option value="Amaretto">Amaretto</option>
+    </select>
+
+    <!-- Button -->
+    <button id="newDrink">Get Drink</button>
+
+    <script>
+        const drinkBox = document.getElementById("drinkBox");
+        const button = document.getElementById("newDrink");
+        const ingredientSelect = document.getElementById("ingredientSelect");
+
+        async function getDrink() {
+            drinkBox.textContent = "Loading your drink recipe now...";
+
+            try {
+                const ingredient = ingredientSelect.value;
+
+                // 1st API call- gets a list of drinks using the selected ingredient
+                const listResponse = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/filter.php?i=${ingredient}`);
+                const listData = await listResponse.json();
+
+                // Picks a random drink from the selected ingredient list
+                const randomDrink = listData.drinks[Math.floor(Math.random() * listData.drinks.length)];
+
+                // 2nd API call: get full drink details
+                const detailResponse = await fetch(`https://www.thecocktaildb.com/api/json/v1/1/search.php?s=${randomDrink.strDrink}`);
+                const detailData = await detailResponse.json();
+                const drink = detailData.drinks[0];
+
+                // Build ingredient list
+                let ingredients = "";
+                for (let i = 1; i <= 15; i++) {
+                    const ingredientName = drink[`strIngredient${i}`];
+                    const measurement = drink[`strMeasure${i}`];
+
+                    if (ingredientName) {
+                        ingredients += `<strong>Ingredient:</strong> ${ingredientName} <br>
+                                        <strong>Measurement:</strong> ${measurement || "N/A"}<br><br>`;
+                    }
+                }
+
+                drinkBox.innerHTML = `
+                    <h2>${drink.strDrink}</h2>
+                    <img src="${drink.strDrinkThumb}" width="200">
+                    <br><br>
+                    <strong>Category:</strong> ${drink.strCategory}<br>
+                    <strong>Glass:</strong> ${drink.strGlass}<br><br>
+
+                    <strong>Ingredients:</strong><br>
+                    ${ingredients}<br>
+
+                    <strong>Instructions:</strong><br>${drink.strInstructions}
+                `;
+            } catch (error) {
+                drinkBox.textContent = "Something went wrong.";
+                console.error(error);
+            }
+        }
+
+        button.addEventListener("click", getDrink);
+    </script>
+
+</body>
+</html>
